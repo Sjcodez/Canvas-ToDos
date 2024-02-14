@@ -18,6 +18,7 @@ var constraintBeingUsed: Date = Date()
 struct TodosView: View {
     @StateObject var viewModel = TodosViewViewModel()
     
+    
     // works for now, but needs to be abstracted at some point (too much space taken up)
     var filteredAssignments: [Assignment] {
         
