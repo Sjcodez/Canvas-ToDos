@@ -71,8 +71,9 @@ struct IndividualTodoView: View {
                     
                     
                 }
+                
         }
-            Image(systemName: "circle.dashed")
+            
         }
     }
 }

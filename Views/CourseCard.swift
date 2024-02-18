@@ -20,7 +20,6 @@ struct CourseCard: View {
                 Text(courseName)
                     .font(.title)
                     .bold()
-                
                 Text("\(String(amountOfAssignments)) assignments due")
                     .font(.subheadline)
             }

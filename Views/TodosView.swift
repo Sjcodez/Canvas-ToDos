@@ -10,9 +10,11 @@ import SwiftUI
 // sorts for list filtering (in progress)
 
 let today = Date()
+let tommorow = Calendar.current.date(byAdding: .day, value: 1, to: today)
 let weekConstraint = Calendar.current.date(byAdding: .day, value: 8, to: today)
 let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: today)
 var constraintBeingUsed: Date = Date()
+
 
 
 struct TodosView: View {
@@ -51,7 +53,19 @@ struct TodosView: View {
                         ForEach(filteredAssignments, id: \.self) { assignment in
                             let date = translateJsonDate(dateString: assignment.due_at ?? "")
                             if date >= Date(), /*date <= weekConstraint ?? Date.distantFuture, */date != Date.distantFuture{
-                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                if date < tommorow ?? Date() {
+                                    Section {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                    } header: {
+                                        Text("Due Today").foregroundStyle(Color.red)
+                                    }
+                                } else if date >= tommorow ?? Date() && date <= weekConstraint ?? Date.distantFuture{
+                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+    
+                                }
+                                else {
+                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                }
                             }
                         }
                     }
