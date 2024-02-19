@@ -32,7 +32,7 @@ func translateJsonDate(dateString: String) -> Date {
     } else {
         let formatter = ISO8601DateFormatter()
         formatter.timeZone = TimeZone(identifier: "PST")
-        formatter.formatOptions = [.withInternetDateTime]
+        formatter.formatOptions = [.withInternetDateTime, .withFullTime]
     //    formatter.formatOptions = [.withTime]
         let date = formatter.date(from: dateString)!
         return date
