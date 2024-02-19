@@ -9,12 +9,11 @@ import SwiftUI
 
 // sorts for list filtering (in progress)
 
-let today = Date()
-let tommorow = Calendar.current.date(byAdding: .day, value: 1, to: today)
-let tommorow2 = Calendar.current.date(byAdding: .day, value: 2, to: today)
-let weekConstraint = Calendar.current.date(byAdding: .day, value: 8, to: today)
-let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: today)
-var constraintBeingUsed: Date = Date()
+let todayMain = Calendar.current.date(bySettingHour: 00, minute: 00, second: 00, of: Date())
+let tommorow = Calendar.current.date(byAdding: .day, value: 1, to: todayMain ?? Date())
+let tommorow2 = Calendar.current.date(byAdding: .day, value: 2, to: todayMain ?? Date())
+let weekConstraint = Calendar.current.date(byAdding: .day, value: 8, to: todayMain ?? Date())
+let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: todayMain ?? Date())
 
 
 

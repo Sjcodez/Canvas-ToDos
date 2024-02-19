@@ -6,3 +6,10 @@
 //
 
 import Foundation
+
+
+class ClassViewViewModel: ObservableObject {
+    @Published var classes: [Course] = []
+    
+    
+}
