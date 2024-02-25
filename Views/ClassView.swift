@@ -11,6 +11,8 @@ struct ClassView: View {
     @StateObject var apicallFuncs = TodosViewViewModel()
     var columns = [GridItem(.adaptive(minimum: 160), spacing: 20)]
     @State var clicked: Bool = false
+    @State var courseClicked: String = ""
+    @State var assignmentListSpecific: [Assignment] = []
     
     var body: some View {
         NavigationView {
@@ -24,6 +26,7 @@ struct ClassView: View {
                             CourseCard(courseName: course_name, amountOfAssignments: 4)
                                 .onTapGesture {
                                     clicked = true
+                                    courseClicked = course.name
                                 }
                         }
                     }
@@ -35,22 +38,20 @@ struct ClassView: View {
             }
             .navigationTitle(Text("Classes"))
             .sheet(isPresented: $clicked, content: {
-                List {
-                    ForEach(apicallFuncs.courses) { course in
-                        ForEach(apicallFuncs.assignments) { assignment in
-                            if assignment.course_id == course.id {
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: apicallFuncs.courses, date: date, assignmentPoints: assignment.points_possible)
-                            }
-                        }
+                if let selectedCourse = apicallFuncs.courses.first(where: { $0.name == courseClicked }) {
+                    let assignmentsForCourse = apicallFuncs.assignments.filter({ $0.course_id == selectedCourse.id })
+                    if !assignmentsForCourse.isEmpty {
+                        TodosView_Abstracted(assignments: assignmentsForCourse, courses: apicallFuncs.courses)
                     }
                 }
+            }).onAppear(perform: {
+                apicallFuncs.fetchCourses()
             })
         }
-        
     }
 }
 
-#Preview {
+#Preview
+{
     ClassView()
 }

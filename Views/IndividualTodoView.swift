@@ -45,13 +45,10 @@ struct IndividualTodoView: View {
                             .font(.footnote)
                         Text(String(assignmentPoints))
                             .font(.footnote)
-                    } else if date == Date.now{
-                        Text("Due Today:")
+                    } else if date == Date.distantPast{
+                        Text("Assignment Completed")
                             .font(.footnote)
-                            .foregroundStyle(Color.red)
-                        Text(date, style: .date)
-                            .font(.footnote)
-                            .foregroundStyle(Color.red)
+                            .foregroundStyle(Color.green)
                         Spacer()
                         Text("Points:")
                             .font(.footnote)

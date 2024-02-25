@@ -23,18 +23,17 @@ struct Assignment: Hashable, Codable, Identifiable {
     let has_submitted_submissions: Bool
 }
 
-struct Submission: Hashable, Codable {
+struct submission: Hashable, Codable, Identifiable {
+    let id: Int
     let assignment_id: Int
-    let course: String?
-    let score: Double
-    let attempt: Int
+    let score: Double?
+    let attempt: Int?
 }
-
 
 class TodosViewViewModel: ObservableObject {
     @Published var courses: [Course] = []
     @Published var assignments: [Assignment] = []
-    @Published var submissions: [Submission] = []
+    @Published var submissions: [submission] = []
     
     @Published var filter: String = ""
     @Published var searchQuery: String = "" 
@@ -43,6 +42,7 @@ class TodosViewViewModel: ObservableObject {
     private let tokenChino = "Bearer 3438~jvTun82RKv3EV3JB3lMX9GBzI0wCDst4J8IgionASTMBuZCeM3ndwBUXdwumJLw3"
     private let tokenAndrew = "Bearer 3438~J5b1YuQ0bvm1gSiFPtbUvShaiIvm7hBYerVhpGlfl9Mp93rIXFJavSNpd8rvL0mm"
     private let tokenAneesh = "Bearer 3438~TyCtzQQ0g2K7ElrVFRmQrHsVrUr6Abvo2T2kwxPvyavWfi5sot278dsbFQ1vG1CL"
+    private let sanjithUser = "34380000000364990"
     
     func fetchCourses() {
         guard let url = URL(string: "https://canvas.instructure.com/api/v1/courses?enrollment_state=active") else {
@@ -104,6 +104,7 @@ class TodosViewViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     self?.assignments.append(contentsOf: assignments)
                     self?.sortAssignments()
+//                    self?.fetchSubmissions()
                 }
 //                print(assignments)
             } catch {
@@ -111,45 +112,37 @@ class TodosViewViewModel: ObservableObject {
             }
         }
         task.resume()
-
-        
     }
-    
-//    func fetchSubmissions(courseList: [Course], assignmentList: [Assignment]) {
-//        for course in courseList {
-//            for assignment in assignmentList {
-//                if course.id == assignment.course_id {
-//                    guard let url = URL(string: "https://canvas.instructure.com/api/v1/courses/\(course.id)/assignments/\(assignment.id)/submissions/\(course.enrollments.user_id)") else {
-//                        return
-//                    }
-//                    
-//                    var request = URLRequest(url: url)
-//                    
-//                    request.addValue(token, forHTTPHeaderField: "Authorization")
-//                    
-//                    request.httpMethod = "Get"
-//                    
-//                    let task = URLSession.shared.dataTask(with: request) { [weak self] data, res, err in
-//                        guard let data = data, err == nil else {
-//                            return
-//                        }
-//                        do {
-//                            let submissions = try JSONDecoder().decode([Submission].self, from: data)
-//                            DispatchQueue.main.async {
-//                                self?.submissions = submissions
-//                            }
-//                            
-//                        } catch {
-//                            print(error)
-//                        }
-//                        
-//                    }
-//                    print(submissions)
-//                    task.resume()
-//                }
-//            }
-//        }
-//    }
+    public func fetchSubmissions(courseId: Int, assignmentId: Int) {
+       
+        guard let url = URL(string: "https://canvas.instructure.com/api/v1/courses/\(String(courseId))/assignments/\(String(assignmentId))/submissions/\(sanjithUser)") else {
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        
+        request.addValue(token, forHTTPHeaderField: "Authorization")
+        
+        request.httpMethod = "Get"
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, res, err in
+            guard let data = data, err == nil else {
+                return
+            }
+            do {
+                let submissions = try JSONDecoder().decode([submission].self, from: data)
+                DispatchQueue.main.async {
+                    self?.submissions = submissions
+                }
+                
+            } catch {
+                print(error)
+            }
+            
+        }
+        print(submissions)
+        task.resume()
+    }
     
     func sortAssignments() {
         // doing this allows us to delete duplicate assignments when the for loop goes again in the fetch all assignments function, for every reload of the todos page.

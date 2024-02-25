@@ -15,11 +15,8 @@ let tommorow2 = Calendar.current.date(byAdding: .day, value: 2, to: todayMain ??
 let weekConstraint = Calendar.current.date(byAdding: .day, value: 8, to: todayMain ?? Date())
 let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: todayMain ?? Date())
 
-
-
 struct TodosView: View {
     @StateObject var viewModel = TodosViewViewModel()
-    
     
     // works for now, but needs to be abstracted at some point (too much space taken up)
     var filteredAssignments: [Assignment] {
@@ -45,10 +42,10 @@ struct TodosView: View {
     }
     
     
+    
     var body: some View {
         NavigationView {
             VStack {
-                if viewModel.filter.isEmpty {
                     List {
                         Section {
                             ForEach(filteredAssignments, id: \.self) { assignment in
@@ -95,39 +92,16 @@ struct TodosView: View {
                         } header: {
                             Text("Future Due Dates")
                         }
-                
-                        
-//                        ForEach(filteredAssignments, id: \.self) { assignment in
-//                            let date = translateJsonDate(dateString: assignment.due_at ?? "")
-//                            if date >= Date(), /*date <= weekConstraint ?? Date.distantFuture, */date != Date.distantFuture{
-//                                if date < tommorow ?? Date() {
-//                                    Section {
-//                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
-//                                    } header: {
-//                                        Text("Due Today").foregroundStyle(Color.red)
-//                                    }
-//                                } else if date >= tommorow ?? Date() && date <= weekConstraint ?? Date.distantFuture{
-//                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
-//    
-//                                }
-//                                else {
-//                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
-//                                }
-//                            }
-//                        }
                     }
                     .navigationTitle("Assignments")
-                    // in progress
                     .searchable(text: $viewModel.searchQuery, prompt: "Search")
                     .overlay(content: {
                         if filteredAssignments.isEmpty {
                             ContentUnavailableView.search
                         }
                     })
-                    // in progress
                     .onAppear {
                         viewModel.fetchCourses()
-                        
                     }
                 }
             }
@@ -161,7 +135,7 @@ struct TodosView: View {
         }
     }
         
-}
+
 
 
 #Preview {
