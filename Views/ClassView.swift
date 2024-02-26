@@ -41,11 +41,15 @@ struct ClassView: View {
                 if let selectedCourse = apicallFuncs.courses.first(where: { $0.name == courseClicked }) {
                     let assignmentsForCourse = apicallFuncs.assignments.filter({ $0.course_id == selectedCourse.id })
                     if !assignmentsForCourse.isEmpty {
-                        TodosView_Abstracted(assignments: assignmentsForCourse, courses: apicallFuncs.courses)
+                        TodosView_Abstracted(assignmentsForCourse: assignmentsForCourse, courses: apicallFuncs.courses)
+                            .onAppear(perform: {
+                                apicallFuncs.fetchCourses()
+                            })
+                    } else {
+                        Text("No Assignments Due :)")
+                            .bold()
                     }
                 }
-            }).onAppear(perform: {
-                apicallFuncs.fetchCourses()
             })
         }
     }

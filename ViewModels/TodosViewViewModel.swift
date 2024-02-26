@@ -37,6 +37,7 @@ class TodosViewViewModel: ObservableObject {
     
     @Published var filter: String = ""
     @Published var searchQuery: String = "" 
+    @Published var dueToday: Bool = false
     
     private let token = "Bearer 3438~T1aCVMoZv3OaOSmDcSIieROTEudEN9ckP3Dm1Wk7t98FSYLHgpAWaGUuEzxtTlgp"
     private let tokenChino = "Bearer 3438~jvTun82RKv3EV3JB3lMX9GBzI0wCDst4J8IgionASTMBuZCeM3ndwBUXdwumJLw3"
@@ -151,6 +152,14 @@ class TodosViewViewModel: ObservableObject {
         assignments.sort { Assignment1, Assignment2 in
             translateJsonDate(dateString: Assignment1.due_at ?? "") < translateJsonDate(dateString: Assignment2.due_at ?? "")
         }
+    }
+    
+    func getNextMonday() -> Date {
+        let calendar = Calendar.current
+        var components = DateComponents()
+        components.weekday = 2
+        let today = Calendar.current.date(bySettingHour: 00, minute: 00, second: 00, of: Date())
+        return calendar.nextDate(after: today ?? Date(), matching: components, matchingPolicy: .nextTime) ?? Date.distantFuture
     }
     
     

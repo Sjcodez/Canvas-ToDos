@@ -8,6 +8,7 @@
 import Foundation
 
 
+
 extension Encodable {
     func asDictionary() -> [String: Any] {
         guard let data = try? JSONEncoder().encode(self) else {
@@ -20,7 +21,6 @@ extension Encodable {
         } catch {
             return [:]
         }
-
     }
 }
 
@@ -41,3 +41,4 @@ func translateJsonDate(dateString: String) -> Date {
 //    String(date)
 //    return date
 }
+

@@ -8,66 +8,106 @@
 import SwiftUI
 
 struct TodosView_Abstracted: View {    
-    let assignments: [Assignment]
+    let assignmentsForCourse: [Assignment]
     let courses: [Course]
 //    @State var dueToday: [Assignment]
+    @State var dueToday: Bool = false
+    @State var dueTommorow: Bool = false
+    @State var restOfTheWeek: Bool = false
+    @State var futureDueDates: Bool = false
+    
+    let mainWeekConstraint = TodosViewViewModel().getNextMonday()
+    
+    
+    var isDueToday: Void {
+        for assignment in assignmentsForCourse {
+            let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
+            if  assignmentDueDate < tommorow ?? Date.distantFuture && assignmentDueDate >= todayMain ?? Date.distantPast {
+                dueToday = true
+            }
+            if assignmentDueDate < tommorow2 ?? Date.distantFuture, assignmentDueDate >= tommorow ?? Date.distantPast {
+                dueTommorow = true
+            }
+            if assignmentDueDate >= tommorow2 ?? Date.distantPast, assignmentDueDate < mainWeekConstraint {
+                restOfTheWeek = true
+            }
+            if assignmentDueDate > mainWeekConstraint, assignmentDueDate != Date.distantFuture{
+                futureDueDates = true
+            }
+        }
+    }
+    
+    
     var body: some View {
         NavigationView {
             VStack {
                     List {
-                        Section {
-                            ForEach(assignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < tommorow ?? Date() && date > Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                        if dueToday {
+                            Section {
+                                ForEach(assignmentsForCourse, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < tommorow ?? Date() && date > Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Due Today")
+                                    .foregroundStyle(.red)
                             }
-                        } header: {
-                            Text("Due Today")
-                                .foregroundStyle(.red)
                         }
-                        
-                        Section {
-                            ForEach(assignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < tommorow2 ?? Date() && date > tommorow ?? Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                        if dueTommorow {
+                            Section {
+                                ForEach(assignmentsForCourse, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < tommorow2 ?? Date() && date > tommorow ?? Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Due Tommorow")
+                                    .foregroundStyle(.blue)
                             }
-                        } header: {
-                            Text("Due Tommorow")
-                                .foregroundStyle(.blue)
                         }
-                        
-                        Section {
-                            ForEach(assignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < weekConstraint ?? Date.distantFuture && date > tommorow2 ?? Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                        if restOfTheWeek {
+                            Section {
+                                ForEach(assignmentsForCourse, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < mainWeekConstraint && date >= tommorow2 ?? Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Rest Of The Week")
                             }
-                        } header: {
-                            Text("Rest Of The Week")
                         }
-                        
-                        Section {
-                            ForEach(assignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date > weekConstraint ?? Date.distantPast && date != Date.distantFuture {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                        if futureDueDates {
+                            Section {
+                                ForEach(assignmentsForCourse, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date > mainWeekConstraint && date != Date.distantFuture {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Future Due Dates")
                             }
-                        } header: {
-                            Text("Future Due Dates")
+                        }
+                        if dueToday != true, dueTommorow != true, restOfTheWeek != true, futureDueDates != true {
+                            Text("Your Free!! :)")
+                                .bold()
                         }
                     }
                     .navigationTitle("Assignments")
+                    .onAppear(perform: {
+                        isDueToday
+                    })
 
                 }
             }
         }
+        
     }
 
 #Preview {
-    TodosView_Abstracted(assignments: TodosViewViewModel().assignments, courses: TodosViewViewModel().courses)
+    TodosView_Abstracted(assignmentsForCourse: TodosViewViewModel().assignments, courses: TodosViewViewModel().courses)
 }

@@ -15,8 +15,10 @@ let tommorow2 = Calendar.current.date(byAdding: .day, value: 2, to: todayMain ??
 let weekConstraint = Calendar.current.date(byAdding: .day, value: 8, to: todayMain ?? Date())
 let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: todayMain ?? Date())
 
+
 struct TodosView: View {
     @StateObject var viewModel = TodosViewViewModel()
+    @State var dueToday: Bool = false
     
     // works for now, but needs to be abstracted at some point (too much space taken up)
     var filteredAssignments: [Assignment] {
@@ -38,27 +40,37 @@ struct TodosView: View {
             return nil
         }
         return filteredAssignments
-        
+
     }
     
-    
+    var isDueToday: Bool {
+        for assignment in filteredAssignments {
+            if translateJsonDate(dateString: assignment.due_at ?? "") < tommorow ?? Date.distantFuture, translateJsonDate(dateString: assignment.due_at ?? "") > todayMain ?? Date.distantPast {
+                return true
+            }
+        }
+        return false
+    }
     
     var body: some View {
+        let mainWeekConstraint = viewModel.getNextMonday()
         NavigationView {
             VStack {
                     List {
-                        Section {
-                            ForEach(filteredAssignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < tommorow ?? Date() && date > Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                        if isDueToday {
+                            Section {
+                                ForEach(filteredAssignments, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < tommorow ?? Date() && date > Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Due Today")
+                                    .foregroundStyle(.red)
+                                    .bold()
                             }
-                        } header: {
-                            Text("Due Today")
-                                .foregroundStyle(.red)
                         }
-                        
                         Section {
                             ForEach(filteredAssignments, id: \.self) { assignment in
                                 let date = translateJsonDate(dateString: assignment.due_at ?? "")
@@ -74,7 +86,7 @@ struct TodosView: View {
                         Section {
                             ForEach(filteredAssignments, id: \.self) { assignment in
                                 let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < weekConstraint ?? Date.distantFuture && date > tommorow2 ?? Date() {
+                                if date < mainWeekConstraint && date > tommorow2 ?? Date() {
                                     IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
                                 }
                             }
@@ -85,7 +97,7 @@ struct TodosView: View {
                         Section {
                             ForEach(filteredAssignments, id: \.self) { assignment in
                                 let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date > weekConstraint ?? Date.distantPast && date != Date.distantFuture {
+                                if date > mainWeekConstraint && date != Date.distantFuture {
                                     IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
                                 }
                             }
