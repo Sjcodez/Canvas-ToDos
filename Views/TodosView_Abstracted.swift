@@ -10,6 +10,7 @@ import SwiftUI
 struct TodosView_Abstracted: View {    
     let assignmentsForCourse: [Assignment]
     let courses: [Course]
+    let courseClicked: String
 //    @State var dueToday: [Assignment]
     @State var dueToday: Bool = false
     @State var dueTommorow: Bool = false
@@ -36,7 +37,6 @@ struct TodosView_Abstracted: View {
             }
         }
     }
-    
     
     var body: some View {
         NavigationView {
@@ -97,7 +97,8 @@ struct TodosView_Abstracted: View {
                                 .bold()
                         }
                     }
-                    .navigationTitle("Assignments")
+                    .navigationTitle("\(courseClicked)")
+                    .font(.subheadline)
                     .onAppear(perform: {
                         isDueToday
                     })
@@ -109,5 +110,5 @@ struct TodosView_Abstracted: View {
     }
 
 #Preview {
-    TodosView_Abstracted(assignmentsForCourse: TodosViewViewModel().assignments, courses: TodosViewViewModel().courses)
+    TodosView_Abstracted(assignmentsForCourse: TodosViewViewModel().assignments, courses: TodosViewViewModel().courses, courseClicked: "Some Course")
 }

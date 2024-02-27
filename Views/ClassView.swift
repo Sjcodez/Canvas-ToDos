@@ -14,6 +14,7 @@ struct ClassView: View {
     @State var courseClicked: String = ""
     @State var assignmentListSpecific: [Assignment] = []
     
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -41,13 +42,11 @@ struct ClassView: View {
                 if let selectedCourse = apicallFuncs.courses.first(where: { $0.name == courseClicked }) {
                     let assignmentsForCourse = apicallFuncs.assignments.filter({ $0.course_id == selectedCourse.id })
                     if !assignmentsForCourse.isEmpty {
-                        TodosView_Abstracted(assignmentsForCourse: assignmentsForCourse, courses: apicallFuncs.courses)
+                        let course_name = fixCourseName(courseName: courseClicked)
+                        TodosView_Abstracted(assignmentsForCourse: assignmentsForCourse, courses: apicallFuncs.courses, courseClicked: course_name)
                             .onAppear(perform: {
                                 apicallFuncs.fetchCourses()
                             })
-                    } else {
-                        Text("No Assignments Due :)")
-                            .bold()
                     }
                 }
             })

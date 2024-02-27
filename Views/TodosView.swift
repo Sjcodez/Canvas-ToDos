@@ -18,8 +18,11 @@ let monthConstraint = Calendar.current.date(byAdding: .day, value: 32, to: today
 
 struct TodosView: View {
     @StateObject var viewModel = TodosViewViewModel()
-    @State var dueToday: Bool = false
+    @State var mainView: Bool = true
+    @State var pastDue: Bool = false
+    @State var noDueDate: Bool = false
     
+    let mainWeekConstraint = TodosViewViewModel().getNextMonday()
     // works for now, but needs to be abstracted at some point (too much space taken up)
     var filteredAssignments: [Assignment] {
         
@@ -43,9 +46,40 @@ struct TodosView: View {
 
     }
     
-    var isDueToday: Bool {
+    var dueToday: Bool {
         for assignment in filteredAssignments {
-            if translateJsonDate(dateString: assignment.due_at ?? "") < tommorow ?? Date.distantFuture, translateJsonDate(dateString: assignment.due_at ?? "") > todayMain ?? Date.distantPast {
+            let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
+            if assignmentDueDate < tommorow ?? Date.distantFuture && assignmentDueDate >= todayMain ?? Date.distantPast {
+                return true
+            }
+        }
+        return false
+    }
+    
+    var dueTommorow: Bool {
+        for assignment in filteredAssignments {
+            let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
+            if assignmentDueDate < tommorow2 ?? Date() && assignmentDueDate >= tommorow ?? Date.distantPast {
+                return true
+            }
+        }
+        return false
+    }
+    
+    var restOfTheWeek: Bool {
+        for assignment in filteredAssignments {
+            let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
+            if assignmentDueDate < mainWeekConstraint, assignmentDueDate < tommorow2 ?? Date.distantFuture {
+                return true
+            }
+        }
+        return false
+    }
+    
+    var futureDueDates: Bool {
+        for assignment in filteredAssignments {
+            let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
+            if assignmentDueDate != Date.distantFuture, assignmentDueDate > mainWeekConstraint {
                 return true
             }
         }
@@ -56,12 +90,13 @@ struct TodosView: View {
         let mainWeekConstraint = viewModel.getNextMonday()
         NavigationView {
             VStack {
+                if mainView {
                     List {
-                        if isDueToday {
+                        if dueToday {
                             Section {
                                 ForEach(filteredAssignments, id: \.self) { assignment in
                                     let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                    if date < tommorow ?? Date() && date > Date() {
+                                    if date < tommorow ?? Date() && date > todayMain ?? Date() {
                                         IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
                                     }
                                 }
@@ -71,29 +106,31 @@ struct TodosView: View {
                                     .bold()
                             }
                         }
-                        Section {
-                            ForEach(filteredAssignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < tommorow2 ?? Date() && date > tommorow ?? Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                        if dueTommorow {
+                            Section {
+                                ForEach(filteredAssignments, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < tommorow2 ?? Date() && date > tommorow ?? Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Due Tommorow")
+                                    .foregroundStyle(.blue)
                             }
-                        } header: {
-                            Text("Due Tommorow")
-                                .foregroundStyle(.blue)
                         }
-                        
-                        Section {
-                            ForEach(filteredAssignments, id: \.self) { assignment in
-                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                                if date < mainWeekConstraint && date > tommorow2 ?? Date() {
-                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                        if restOfTheWeek {
+                            Section {
+                                ForEach(filteredAssignments, id: \.self) { assignment in
+                                    let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                    if date < mainWeekConstraint && date > tommorow2 ?? Date() {
+                                        IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                    }
                                 }
+                            } header: {
+                                Text("Rest Of The Week")
                             }
-                        } header: {
-                            Text("Rest Of The Week")
                         }
-                        
                         Section {
                             ForEach(filteredAssignments, id: \.self) { assignment in
                                 let date = translateJsonDate(dateString: assignment.due_at ?? "")
@@ -112,40 +149,216 @@ struct TodosView: View {
                             ContentUnavailableView.search
                         }
                     })
-                    .onAppear {
+                    .onAppear(perform: {
                         viewModel.fetchCourses()
+                    })
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Menu {
+                                Button(action: {
+                                    mainView = true
+                                    pastDue = false
+                                    noDueDate = false
+                                }, label: {
+                                    Text("Assignments")
+                                    if mainView {
+                                        Label {
+                                            Text("Assignments")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                })
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = true
+                                    noDueDate = false
+                                }) {
+                                    Text("Past Due")
+                                    if pastDue {
+                                        Label {
+                                            Text("Past Due")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = false
+                                    noDueDate = true
+                                }) {
+                                    Text("No Due Date")
+                                    if noDueDate {
+                                        Label {
+                                            Text("No Due Date")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    title: { Text("Filters") },
+                                    icon: { Image(systemName: "line.3.horizontal.decrease.circle") }
+                                )
+                            }
+                        }
+                    
+                    }
+                }
+                if pastDue {
+                    List {
+                        ForEach(filteredAssignments, id: \.self) { assignment in
+                            let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                            if date < todayMain ?? Date() {
+                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                            }
+                        }
+                    }
+                    .navigationTitle("Past Due Dates")
+                    .searchable(text: $viewModel.searchQuery, prompt: "Search")
+                    .overlay(content: {
+                        if filteredAssignments.isEmpty {
+                            ContentUnavailableView.search
+                        }
+                    })
+                    .onAppear(perform: {
+                        viewModel.fetchCourses()
+                    })
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Menu {
+                                Button(action: {
+                                    mainView = true
+                                    pastDue = false
+                                    noDueDate = false
+                                }, label: {
+                                    Text("Assignments")
+                                    if mainView {
+                                        Label {
+                                            Text("Assignments")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                })
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = true
+                                    noDueDate = false
+                                }) {
+                                    Text("Past Due")
+                                    if pastDue {
+                                        Label {
+                                            Text("Past Due")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = false
+                                    noDueDate = true
+                                }) {
+                                    Text("No Due Date")
+                                    if noDueDate {
+                                        Label {
+                                            Text("No Due Date")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    title: { Text("Filters") },
+                                    icon: { Image(systemName: "line.3.horizontal.decrease.circle") }
+                                )
+                            }
+                        }
+                    
+                    }
+                }
+                if noDueDate {
+                    List {
+                        ForEach(filteredAssignments, id: \.self) { assignment in
+                            let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                            if date == Date.distantFuture {
+                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                            }
+                        }
+                    }
+                    .navigationTitle("Past Due Dates")
+                    .searchable(text: $viewModel.searchQuery, prompt: "Search")
+                    .overlay(content: {
+                        if filteredAssignments.isEmpty {
+                            ContentUnavailableView.search
+                        }
+                    })
+                    .onAppear(perform: {
+                        viewModel.fetchCourses()
+                    })
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Menu {
+                                Button(action: {
+                                    mainView = true
+                                    pastDue = false
+                                    noDueDate = false
+                                }, label: {
+                                    Text("Assignments")
+                                    if mainView {
+                                        Label {
+                                            Text("Assignments")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                })
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = true
+                                    noDueDate = false
+                                }) {
+                                    Text("Past Due")
+                                    if pastDue {
+                                        Label {
+                                            Text("Past Due")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                                Button(action: {
+                                    mainView = false
+                                    pastDue = false
+                                    noDueDate = true
+                                }) {
+                                    Text("No Due Date")
+                                    if noDueDate {
+                                        Label {
+                                            Text("No Due Date")
+                                        } icon: {
+                                            Image(systemName: "checkmark.circle.fill")
+                                        }
+                                    }
+                                }
+                            } label: {
+                                Label(
+                                    title: { Text("Filters") },
+                                    icon: { Image(systemName: "line.3.horizontal.decrease.circle") }
+                                )
+                            }
+                        }
                     }
                 }
             }
-            .toolbar(content: {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Menu {
-                        Picker("Sort", selection: $viewModel.filter) {
-                            Button(action: {
-                                
-                            }, label: {
-                                Text("1 Week")
-                            })
-                            Button(action: {
-                                // something that changes the filter constraint to 1 week, 1 month, etc...
-                            }, label: {
-                                Text("1 Month")
-                            })
-                            Button(action: {
-                                // something that changes the filter constraint to 1 week, 1 month, etc...
-                            }, label: {
-                                Text("No Due Date")
-                            })
-                        }
-                        .labelsHidden()
-                    } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                    }
-
-                }
-            }) 
         }
+        
     }
+}
         
 
 

@@ -114,7 +114,7 @@ class TodosViewViewModel: ObservableObject {
         }
         task.resume()
     }
-    public func fetchSubmissions(courseId: Int, assignmentId: Int) {
+    func fetchSubmissions(courseId: Int, assignmentId: Int) {
        
         guard let url = URL(string: "https://canvas.instructure.com/api/v1/courses/\(String(courseId))/assignments/\(String(assignmentId))/submissions/\(sanjithUser)") else {
             return

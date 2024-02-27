@@ -42,3 +42,8 @@ func translateJsonDate(dateString: String) -> Date {
 //    return date
 }
 
+func fixCourseName(courseName: String) -> String {
+    let courseNameArray = courseName.components(separatedBy: " ")
+    let course_name = courseNameArray[0] + " " + courseNameArray[1]
+    return course_name
+}
