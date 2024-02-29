@@ -21,6 +21,8 @@ struct TodosView: View {
     @State var mainView: Bool = true
     @State var pastDue: Bool = false
     @State var noDueDate: Bool = false
+    @State var byClass: Bool = true
+    @State var byDate: Bool = false
     
     let mainWeekConstraint = TodosViewViewModel().getNextMonday()
     // works for now, but needs to be abstracted at some point (too much space taken up)
@@ -45,7 +47,7 @@ struct TodosView: View {
         return filteredAssignments
 
     }
-    
+        
     var dueToday: Bool {
         for assignment in filteredAssignments {
             let assignmentDueDate = translateJsonDate(dateString: assignment.due_at ?? "")
@@ -85,6 +87,7 @@ struct TodosView: View {
         }
         return false
     }
+    
     
     var body: some View {
         let mainWeekConstraint = viewModel.getNextMonday()
@@ -129,6 +132,7 @@ struct TodosView: View {
                                 }
                             } header: {
                                 Text("Rest Of The Week")
+                                    .foregroundStyle(Color.green)
                             }
                         }
                         Section {
@@ -208,12 +212,33 @@ struct TodosView: View {
                     }
                 }
                 if pastDue {
+                    let assignmentList = viewModel.sortPastAssignments(listOfAssignments: filteredAssignments)
+                    let courseFilteredAssignmentList = viewModel.sortAssignmentsByClass(listofAssignments: assignmentList, listOfCourses: viewModel.courses)
                     List {
-                        ForEach(filteredAssignments, id: \.self) { assignment in
-                            let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                            if date < todayMain ?? Date() {
-                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                        if byClass {
+                            ForEach(viewModel.courses, id: \.self) { course in
+                                let course_id = course.id
+                                if !course.name.contains("First") {
+                                    Section {
+                                        ForEach(courseFilteredAssignmentList, id: \.self) { assignment in
+                                            if assignment.course_id == course_id {
+                                                let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                                if date < todayMain ?? Date() {
+                                                    IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                                }
+                                            }
+                                        }
+                                    } header: {
+                                        Text("\(course.name)")
+                                            .foregroundStyle(Color.blue)
+                                            .bold()
+                                    }
+                                }
+                                
                             }
+                        }
+                        if byDate {
+                            // Action
                         }
                     }
                     .navigationTitle("Past Due Dates")
@@ -278,19 +303,59 @@ struct TodosView: View {
                                 )
                             }
                         }
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                byClass = true
+                                byDate = false
+                            } label: {
+                                if byClass {
+                                    Image(systemName: "graduationcap.circle.fill")
+                                } else {
+                                    Image(systemName: "graduationcap.circle")
+                                }
+                            }
+                        }
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                byDate = true
+                                byClass = false
+                            } label: {
+                                if byDate {
+                                    Image(systemName: "calendar.circle.fill")
+                                } else {
+                                    Image(systemName: "calendar.circle")
+                                }
+                            }
+                        }
                     
                     }
                 }
                 if noDueDate {
+                    let courseFilteredAssignmentList = viewModel.sortAssignmentsByClass(listofAssignments: filteredAssignments, listOfCourses: viewModel.courses)
                     List {
-                        ForEach(filteredAssignments, id: \.self) { assignment in
-                            let date = translateJsonDate(dateString: assignment.due_at ?? "")
-                            if date == Date.distantFuture {
-                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                        ForEach(viewModel.courses, id: \.self) { course in
+                            let course_id = course.id
+                            if !course.name.contains("First") {
+                                Section {
+                                    ForEach(courseFilteredAssignmentList, id: \.self) { assignment in
+                                        let date = translateJsonDate(dateString: assignment.due_at ?? "")
+                                        let assignment_course_id = assignment.course_id
+                                        if date == Date.distantFuture {
+                                            if course_id == assignment_course_id {
+                                                IndividualTodoView(todoTitle: assignment.name, todoCourseId: assignment.course_id, courses: viewModel.courses, date: date, assignmentPoints: assignment.points_possible)
+                                            }
+                                        }
+                                    }
+                                } header: {
+                                    Text("\(course.name)")
+                                        .bold()
+                                        .foregroundStyle(Color.teal)
+                                }
                             }
                         }
+                        
                     }
-                    .navigationTitle("Past Due Dates")
+                    .navigationTitle("No Due Date")
                     .searchable(text: $viewModel.searchQuery, prompt: "Search")
                     .overlay(content: {
                         if filteredAssignments.isEmpty {
@@ -356,7 +421,6 @@ struct TodosView: View {
                 }
             }
         }
-        
     }
 }
         

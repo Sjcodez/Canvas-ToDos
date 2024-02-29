@@ -154,6 +154,27 @@ class TodosViewViewModel: ObservableObject {
         }
     }
     
+    func sortPastAssignments(listOfAssignments: [Assignment]) -> [Assignment] {
+        var assignmentList = listOfAssignments
+        assignmentList.sort { Assignment1, Assignment2 in
+            translateJsonDate(dateString: Assignment1.due_at ?? "") > translateJsonDate(dateString: Assignment2.due_at ?? "")
+        }
+        return assignmentList
+    }
+    
+    func sortAssignmentsByClass(listofAssignments: [Assignment], listOfCourses: [Course]) -> [Assignment] {
+        var assignmentList: Array<Assignment> = []
+        for course in listOfCourses {
+            for assignment in listofAssignments {
+                if assignment.course_id == course.id {
+                    assignmentList.append(assignment)
+                }
+            }
+        }
+        return assignmentList
+    }
+    
+    
     func getNextMonday() -> Date {
         let calendar = Calendar.current
         var components = DateComponents()

@@ -39,7 +39,7 @@ struct IndividualTodoView: View {
                     if date == Date.distantFuture {
                         Text("No Due Date Assigned")
                             .font(.footnote)
-                            .foregroundStyle(Color.blue)
+                            .foregroundStyle(Color.teal)
                         Spacer()
                         Text("Points:")
                             .font(.footnote)
